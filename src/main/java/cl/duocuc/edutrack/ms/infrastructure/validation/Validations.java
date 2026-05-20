@@ -5,38 +5,57 @@ import jakarta.validation.groups.Default;
 
 /**
  * Grupos de Bean Validation transversales para modelar validaciones
- * condicionales por endpoint sobre un único record Request (mismo criterio de
- * granularidad que las vistas {@code @JsonView}). Compartido por todos los
- * microservicios.
+ * condicionales por endpoint sobre un único record {@code XxxRequest}, en línea
+ * con la convención "un Request, un Response" por entidad (la granularidad de
+ * campos se modela con {@link cl.duocuc.edutrack.ms.infrastructure.jackson.Views @JsonView}
+ * y la granularidad de validaciones se modela con estos grupos).
  *
- * <p><b>Convención:</b></p>
+ * <h3>Convención de uso en los DTOs</h3>
  * <ul>
- *   <li>Las restricciones de <i>formato</i> ({@code @Email}, {@code @Size},
- *       {@code @Min}, {@code @Max}) van en el grupo {@code Default}: siempre se
- *       evalúan y son null-safe (pasan cuando el campo no viaja en esa vista).</li>
- *   <li>Las restricciones de <i>presencia</i> ({@code @NotBlank}, {@code @NotNull})
- *       se anotan con {@code groups = Validations.OnXxx.class} y solo se evalúan en
- *       el endpoint correspondiente.</li>
+ *   <li>Las restricciones de <b>formato</b> ({@code @Email}, {@code @Size},
+ *       {@code @Min}, {@code @Max}, {@code @Pattern}) se declaran <i>sin</i>
+ *       grupos (es decir, en el grupo {@link Default}): siempre se evalúan y
+ *       son null-safe — pasan cuando el campo no viaja en esa vista.</li>
+ *   <li>Las restricciones de <b>presencia</b> ({@code @NotBlank},
+ *       {@code @NotNull}) se anotan con
+ *       {@code groups = Validations.OnXxx.class} y solo se evalúan en los
+ *       endpoints que disparen ese grupo.</li>
  * </ul>
  *
- * <p>El recurso JAX-RS dispara el grupo combinado anotando el parámetro de body
- * con {@code @Valid @ConvertGroup(from = Default.class, to = Validations.Xxx.class)}.
- * Cada {@code Xxx} es un {@code @GroupSequence} que ejecuta primero {@code Default}
- * (formato) y luego el grupo de presencia del endpoint. Los endpoints sin
- * presencia obligatoria (p. ej. {@code PUT}) usan {@code @Valid} a secas (solo
- * {@code Default}).</p>
+ * <h3>Cómo lo activa el endpoint</h3>
+ * <p>El parámetro de body del recurso JAX-RS lleva
+ * {@code @Valid @ConvertGroup(from = Default.class, to = Validations.Xxx.class)}.
+ * Cada {@code Xxx} es una {@link GroupSequence} que ejecuta primero
+ * {@link Default} (formato) y, si pasa, el marcador de presencia del endpoint.
+ * Esto garantiza que un campo malformado no enmascare un campo faltante (las
+ * sequences cortocircuitan al primer fallo).</p>
  *
- * <p>Esta interfaz cubre el grupo {@code OnCreate} y su {@code @GroupSequence}
- * porque son transversales (cualquier MS expone un POST de creación). Los
- * marcadores específicos de cada dominio se agregan en una interfaz hermana
- * dentro del propio MS (p. ej. {@code AuthValidations.OnLogin} en auth).</p>
+ * <p>Endpoints sin presencia obligatoria adicional (típicamente {@code PATCH})
+ * usan solo {@code @Valid}, lo que ejecuta el grupo {@link Default}.</p>
+ *
+ * <h3>Qué hay aquí y qué hay en cada MS</h3>
+ * <p>Esta interfaz expone los grupos transversales: cualquier MS define al
+ * menos un {@code POST} de creación. Los grupos específicos del dominio
+ * (p. ej. {@code AuthValidations.OnLogin}, {@code AuthValidations.Login})
+ * viven en una interfaz hermana dentro del propio microservicio, siguiendo el
+ * mismo patrón marcador + secuencia.</p>
  */
 public interface Validations {
 
-    /** Marcador de presencia obligatoria para POST de creación. */
+    /**
+     * Marcador de presencia obligatoria para creación. Se asocia a campos
+     * cuya nulidad es válida en otros contextos pero no en un {@code POST}.
+     * No se ejecuta por sí solo: el endpoint debe disparar {@link Create}.
+     */
     interface OnCreate {}
 
-    /** POST de creación: formato + presencia obligatoria. */
+    /**
+     * Secuencia que el endpoint de creación dispara: primero {@link Default}
+     * (validaciones de formato), y solo si pasan, {@link OnCreate}
+     * (validaciones de presencia obligatoria). El orden corto-circuita: un
+     * fallo de formato impide reportar un fallo de presencia, lo que mantiene
+     * los errores acotados a un único nivel a la vez.
+     */
     @GroupSequence({ Default.class, OnCreate.class })
     interface Create {}
 }

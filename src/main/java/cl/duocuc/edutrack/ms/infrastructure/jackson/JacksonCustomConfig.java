@@ -6,24 +6,39 @@ import io.quarkus.jackson.ObjectMapperCustomizer;
 import jakarta.inject.Singleton;
 
 /**
- * Hace de {@link Views.Base} la vista por defecto de Jackson, evitando declarar
- * {@code @JsonView(Views.Base.class)} explícitamente en cada endpoint cuya
- * respuesta es la vista base.
+ * Personalización del {@code ObjectMapper} de Quarkus para integrar la
+ * jerarquía {@link Views} de la librería. Se registra como
+ * {@link ObjectMapperCustomizer} (extensión {@code quarkus-jackson}): Quarkus
+ * la detecta automáticamente porque es un bean {@code @Singleton}.
  *
- * <p>La vista solo aplica como <em>default</em>: cualquier
- * {@code @JsonView(...)} sobre un método de recurso (o un parámetro de body)
- * sigue ganando — RESTEasy Reactive Jackson aplica el writer/reader
- * {@code .withView(...)} por request, lo que sobreescribe la vista por defecto
- * de la {@code SerializationConfig} / {@code DeserializationConfig}.</p>
+ * <h3>Qué hace</h3>
+ * <ul>
+ *   <li>Desactiva
+ *       {@link MapperFeature#DEFAULT_VIEW_INCLUSION}: una propiedad sin
+ *       {@code @JsonView} <b>no</b> se serializa ni deserializa cuando hay una
+ *       vista activa. Como en este proyecto todas las propiedades de DTO
+ *       declaran su vista, el efecto es estricto y predecible — nada "se cuela"
+ *       por defecto.</li>
+ *   <li>Fija {@link Views.Base} como vista por defecto, tanto en
+ *       {@code SerializationConfig} como en {@code DeserializationConfig}: si
+ *       un endpoint no declara {@code @JsonView(...)}, Jackson aplica
+ *       {@code Views.Base}.</li>
+ * </ul>
  *
- * <p>Adicionalmente desactiva {@link MapperFeature#DEFAULT_VIEW_INCLUSION}: con
- * una vista activa, solo se serializan/deserializan las propiedades anotadas
- * con una vista compatible. Como todos los componentes de los DTOs declaran
- * {@code @JsonView}, el efecto es estricto y predecible.</p>
+ * <h3>Override por endpoint</h3>
+ * <p>La vista configurada aquí es <i>default</i>: cualquier
+ * {@code @JsonView(...)} declarado en un método de recurso o en un parámetro
+ * de body gana sobre ella. Quarkus REST aplica
+ * {@code writer/reader.withView(...)} por request, lo que sobreescribe el
+ * default del mapper sin mutarlo.</p>
  */
 @Singleton
 public class JacksonCustomConfig implements ObjectMapperCustomizer {
 
+    /**
+     * Aplica las dos personalizaciones descritas en el Javadoc de clase. Se
+     * invoca una sola vez durante el arranque del microservicio.
+     */
     @Override
     public void customize(ObjectMapper mapper) {
         mapper.disable(MapperFeature.DEFAULT_VIEW_INCLUSION);
