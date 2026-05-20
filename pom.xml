@@ -55,10 +55,6 @@
             <groupId>io.smallrye.stork</groupId>
             <artifactId>stork-service-discovery-consul</artifactId>
         </dependency>
-        <dependency>
-            <groupId>io.smallrye.stork</groupId>
-            <artifactId>stork-load-balancer-round-robin</artifactId>
-        </dependency>
 
         <dependency>
             <groupId>io.quarkus</groupId>
