@@ -54,7 +54,7 @@
  *       {@code @MappedSuperclass} con la auditoría común a las entidades:
  *       {@link cl.duocuc.edutrack.ms.infrastructure.persistence.CreatableEntity}
  *       ({@code id} UUID + {@code createdAt}) y
- *       {@link cl.duocuc.edutrack.ms.infrastructure.persistence.AuditableEntity}
+ *       {@link cl.duocuc.edutrack.ms.infrastructure.persistence.UpdatableEntity}
  *       (agrega {@code updatedAt}).</li>
  * </ul>
  *
