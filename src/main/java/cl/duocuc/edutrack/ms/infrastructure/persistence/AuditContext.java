@@ -17,16 +17,18 @@ import java.util.UUID;
  * servicio decida qué hacer (asignar a mano o dejar fallar la
  * restricción {@code NOT NULL}).</p>
  */
-final class AuditContext {
+public final class AuditContext {
 
     private AuditContext() {}
+    //TODO: impl desde .env
+    public static final UUID NOOP_USER_ID = UUID.fromString("019e5c76-eaed-72c1-ad2c-c3bd0536d71d");
 
-    static UUID currentUserOrNull() {
+    static UUID currentUserOrNoop() {
         try (InstanceHandle<RequestContext> handle = Arc.container().instance(RequestContext.class)) {
             if (handle == null || !handle.isAvailable()) return null;
-            return handle.get().headers().userId().orElse(null);
+            return handle.get().headers().userId().orElse(NOOP_USER_ID);
         } catch (RuntimeException ignored) {
-            return null;
+            return NOOP_USER_ID;
         }
     }
 }

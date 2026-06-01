@@ -1,5 +1,6 @@
 package cl.duocuc.edutrack.ms.infrastructure.context;
 
+import cl.duocuc.edutrack.ms.clients.AuthAccessClient;
 import cl.duocuc.edutrack.ms.infrastructure.security.Permission;
 import cl.duocuc.edutrack.ms.infrastructure.security.ResourceIds;
 import io.quarkus.arc.DefaultBean;

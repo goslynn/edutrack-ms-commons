@@ -57,6 +57,8 @@ public abstract class CreatableEntity extends PanacheEntityBase {
     @PrePersist
     protected void onCreate() {
         createdAt = Instant.now();
-        creatorUser = AuditContext.currentUserOrNull();
+        if (creatorUser == null) {
+            creatorUser = AuditContext.currentUserOrNoop();
+        }
     }
 }

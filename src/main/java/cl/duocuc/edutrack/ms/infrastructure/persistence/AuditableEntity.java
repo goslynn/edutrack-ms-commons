@@ -50,6 +50,8 @@ public abstract class AuditableEntity extends CreatableEntity {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = Instant.now();
-        updaterUser = AuditContext.currentUserOrNull();
+        if (updaterUser == null) {
+            updaterUser = AuditContext.currentUserOrNoop();
+        }
     }
 }
