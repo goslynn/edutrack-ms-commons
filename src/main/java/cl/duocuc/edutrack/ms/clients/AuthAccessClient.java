@@ -3,6 +3,7 @@ package cl.duocuc.edutrack.ms.clients;
 import cl.duocuc.edutrack.ms.infrastructure.context.RemoteSuperUserResolver;
 import cl.duocuc.edutrack.ms.infrastructure.context.RequestContext;
 import cl.duocuc.edutrack.ms.infrastructure.context.SuperUserResolver;
+import cl.duocuc.edutrack.ms.infrastructure.discovery.IdentityHeadersFactory;
 import cl.duocuc.edutrack.ms.infrastructure.discovery.ServiceIds;
 import cl.duocuc.edutrack.ms.infrastructure.jackson.Views;
 import cl.duocuc.edutrack.ms.infrastructure.security.ResourceIds;
@@ -14,7 +15,11 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import org.eclipse.microprofile.rest.client.annotation.RegisterClientHeaders;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
+
+import java.util.UUID;
 
 /**
  * REST Client tipado contra el endpoint {@code GET /auth/access} del Auth
@@ -55,6 +60,7 @@ import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
  *
  */
 @RegisterRestClient(configKey = ServiceIds.AUTH)
+@RegisterClientHeaders(IdentityHeadersFactory.class)
 public interface AuthAccessClient {
 
     /**
@@ -75,25 +81,6 @@ public interface AuthAccessClient {
     @GET
     @Path("/auth/access")
     @Produces(MediaType.APPLICATION_JSON)
-    AccessCheckResponse check(
-        @HeaderParam("X-User-Id") String userId,
-        @HeaderParam("X-User-Roles") String userRoles,
-        @QueryParam("resourceUuid") String resourceUuid,
-        @QueryParam("permission") String permission);
+    Response check(@QueryParam("resourceUuid") UUID resourceUuid, @QueryParam("permission") String permission);
 
-    /**
-     * Vista mínima del JSON emitido por {@code AccessResource} en
-     * {@code auth/}. Solo declara los campos que esta librería necesita
-     * ({@code effectiveFlags}); el resto del payload se descarta con
-     * {@link JsonIgnoreProperties}.
-     *
-     * <p>El campo se anota con {@link JsonView} porque la configuración
-     * Jackson de la librería ({@code JacksonCustomConfig}) deshabilita
-     * {@code DEFAULT_VIEW_INCLUSION}: sin la vista, Jackson no
-     * deserializaría el campo.</p>
-     */
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    record AccessCheckResponse(
-        @JsonView(Views.Base.class) short effectiveFlags
-    ) {}
 }

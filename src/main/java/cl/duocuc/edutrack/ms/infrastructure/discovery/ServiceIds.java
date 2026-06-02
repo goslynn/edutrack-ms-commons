@@ -3,7 +3,7 @@ package cl.duocuc.edutrack.ms.infrastructure.discovery;
 /**
  * Catálogo de identificadores lógicos <b>bare</b> de los microservicios de
  * EduTrack. Es la <b>única fuente de verdad</b> de los nombres usados para
- * descubrimiento entre servicios: {@link ServiceRegistry} sustituye uno de
+ * descubrimiento entre servicios: {@link HTTPClientUtils} sustituye uno de
  * estos valores en el placeholder {@code {service}} del patrón
  * {@code edutrack.discovery.pattern} para resolver el host destino.
  *

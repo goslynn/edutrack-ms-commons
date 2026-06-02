@@ -41,7 +41,7 @@ import jakarta.ws.rs.core.Response;
  * {@link Response} directamente.</p>
  */
 @ApplicationScoped
-public class ServiceRegistry {
+public class HTTPClientUtils {
 
     /**
      * Lee el cuerpo de una respuesta exitosa al tipo dado, o lanza

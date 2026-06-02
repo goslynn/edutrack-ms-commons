@@ -73,7 +73,7 @@
  * {@code @RegisterRestClient(configKey = ServiceIds.X)}, declaran
  * path/verbo/headers tipados pero retornan {@link jakarta.ws.rs.core.Response}:
  * el consumidor extrae el cuerpo con su <b>propio</b> DTO tolerant-reader vía
- * {@link cl.duocuc.edutrack.ms.infrastructure.discovery.ServiceRegistry#readOrThrow(jakarta.ws.rs.core.Response, Class)},
+ * {@link cl.duocuc.edutrack.ms.infrastructure.discovery.HTTPClientUtils#readOrThrow(jakarta.ws.rs.core.Response, Class)},
  * que en no-2xx reconstruye el {@code DomainException} desde el envelope
  * {@code ErrorResponse} del upstream. Ver el {@code package-info} de
  * {@code clients} para el contrato detallado.</p>

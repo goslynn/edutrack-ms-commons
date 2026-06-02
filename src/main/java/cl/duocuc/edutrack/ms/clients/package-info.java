@@ -23,7 +23,7 @@
  * {@link jakarta.ws.rs.core.Response}. La <b>forma</b> de la respuesta no la
  * dicta el client: cada consumidor la extrae con su <b>propio</b> DTO
  * tolerant-reader vía
- * {@link cl.duocuc.edutrack.ms.infrastructure.discovery.ServiceRegistry#readOrThrow(jakarta.ws.rs.core.Response, Class)}.
+ * {@link cl.duocuc.edutrack.ms.infrastructure.discovery.HTTPClientUtils#readOrThrow(jakarta.ws.rs.core.Response, Class)}.
  * Así el productor del MS-y puede evolucionar su payload sin romper consumidores,
  * y dos consumidores distintos pueden bindear slices distintos sin compartir un
  * DTO canónico.</p>

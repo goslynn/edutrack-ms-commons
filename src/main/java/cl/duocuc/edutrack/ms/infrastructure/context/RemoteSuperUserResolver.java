@@ -1,8 +1,11 @@
 package cl.duocuc.edutrack.ms.infrastructure.context;
 
 import cl.duocuc.edutrack.ms.clients.AuthAccessClient;
+import cl.duocuc.edutrack.ms.infrastructure.discovery.HTTPClientUtils;
 import cl.duocuc.edutrack.ms.infrastructure.security.Permission;
 import cl.duocuc.edutrack.ms.infrastructure.security.ResourceIds;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonView;
 import io.quarkus.arc.DefaultBean;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -54,6 +57,9 @@ public class RemoteSuperUserResolver implements SuperUserResolver {
     @RestClient
     AuthAccessClient client;
 
+    @Inject
+    HTTPClientUtils clientUtils;
+
     @Override
     public boolean isSuper() {
         RequestHeaders h = requestContext.headers();
@@ -61,14 +67,30 @@ public class RemoteSuperUserResolver implements SuperUserResolver {
             return false;
         }
         String userId = h.userId().get().toString();
-        String roles = h.roleIds().stream().map(UUID::toString).collect(Collectors.joining(","));
         try {
-            var resp = client.check(userId, roles, ResourceIds.ALL_UUID, Permission.EXECUTE.name());
+            var raw = client.check(ResourceIds.ALL, Permission.EXECUTE.name());
+            var resp = clientUtils.readOrThrow(raw, AccessCheckResponse.class);
             return (resp.effectiveFlags() & RWX) == RWX;
         } catch (RuntimeException e) {
             LOG.warnf(e, "Fallo consultando /auth/access para super-check (userId=%s) — fail-closed", userId);
             return false;
         }
     }
+
+    /**
+     * Vista mínima del JSON emitido por {@code AccessResource} en
+     * {@code auth/}. Solo declara los campos que esta librería necesita
+     * ({@code effectiveFlags}); el resto del payload se descarta con
+     * {@link JsonIgnoreProperties}.
+     *
+     * <p>El campo se anota con {@link JsonView} porque la configuración
+     * Jackson de la librería ({@code JacksonCustomConfig}) deshabilita
+     * {@code DEFAULT_VIEW_INCLUSION}: sin la vista, Jackson no
+     * deserializaría el campo.</p>
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    record AccessCheckResponse(
+            short effectiveFlags
+    ) {}
 
 }
