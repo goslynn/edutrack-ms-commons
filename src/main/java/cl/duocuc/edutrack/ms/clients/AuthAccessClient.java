@@ -66,8 +66,6 @@ public interface AuthAccessClient {
     /**
      * Consulta los flags efectivos del usuario propagado sobre un recurso.
      *
-     * @param userId       valor de {@code X-User-Id} (UUID textual).
-     * @param userRoles    valor de {@code X-User-Roles} (CSV de UUIDs).
      * @param resourceUuid recurso a evaluar; usar
      *                     {@link ResourceIds#ALL_UUID} para preguntar por el
      *                     comodín (caso del check de superusuario).
