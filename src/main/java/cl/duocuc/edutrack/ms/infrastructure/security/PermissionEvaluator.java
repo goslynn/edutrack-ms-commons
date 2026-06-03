@@ -18,7 +18,7 @@ import java.util.UUID;
  *
  * <h3>Algoritmo a implementar</h3>
  * <pre>{@code
- * effective = flags(roleIds, resourceUuid) | flags(roleIds, ResourceIds.ALL)
+ * effective = flags(roleIds, resourceKey) | flags(roleIds, ResourceIds.ALL)
  * return (effective & requiredBits) == requiredBits
  * }</pre>
  *
@@ -37,10 +37,10 @@ public interface PermissionEvaluator {
      *                      {@link cl.duocuc.edutrack.ms.infrastructure.context.RequestHeaders#roleIds()}.
      *                      Una lista vacía es válida y normalmente resuelve a
      *                      {@code false} (usuario sin roles).
-     * @param resourceUuid  UUID del recurso sobre el que se evalúa. En las
-     *                      llamadas del filtro nunca es {@link ResourceIds#ALL}
-     *                      directamente: el comodín solo participa
-     *                      internamente en el OR de flags efectivos.
+     * @param resourceKey   clave estable del recurso sobre el que se evalúa. En
+     *                      las llamadas del filtro nunca es
+     *                      {@link ResourceIds#ALL} directamente: el comodín solo
+     *                      participa internamente en el OR de flags efectivos.
      * @param requiredBits  Bit(s) mínimos requeridos
      *                      ({@link Permission#bit Permission.X.bit}). El filtro
      *                      envía un único bit por anotación; la implementación
@@ -48,5 +48,5 @@ public interface PermissionEvaluator {
      * @return {@code true} si el usuario tiene el permiso; {@code false} en
      *         caso contrario.
      */
-    boolean hasPermission(List<UUID> roleIds, UUID resourceUuid, short requiredBits);
+    boolean hasPermission(List<UUID> roleIds, String resourceKey, short requiredBits);
 }

@@ -59,7 +59,7 @@ public class RemotePermissionEvaluator implements PermissionEvaluator {
     HTTPClientUtils clientUtils;
 
     @Override
-    public boolean hasPermission(List<UUID> roleIds, UUID resourceUuid, short requiredBits) {
+    public boolean hasPermission(List<UUID> roleIds, String resourceKey, short requiredBits) {
         if (roleIds == null || roleIds.isEmpty()) {
             return false;
         }
@@ -67,12 +67,12 @@ public class RemotePermissionEvaluator implements PermissionEvaluator {
             // La 'permission' enviada es irrelevante para el resultado: solo se
             // lee effectiveFlags (OR completo incl. comodín) y el chequeo de
             // bits se hace aquí. Se manda READ por ser el default del endpoint.
-            Response raw = client.check(resourceUuid, Permission.READ.name());
+            Response raw = client.check(resourceKey, Permission.READ.name());
             AccessCheckResponse resp = clientUtils.readOrThrow(raw, AccessCheckResponse.class);
             return (resp.effectiveFlags() & requiredBits) == requiredBits;
         } catch (RuntimeException e) {
             LOG.warnf(e, "Fallo consultando /auth/access (resource=%s, bits=%d) — fail-closed",
-                    resourceUuid, requiredBits);
+                    resourceKey, requiredBits);
             return false;
         }
     }

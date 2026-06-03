@@ -68,7 +68,7 @@
  *       permisos, por ejemplo), se modela como contrato CDI y cada MS aporta su
  *       implementación.</li>
  *   <li><b>No referenciar nombres específicos.</b> Identificadores propios de
- *       un MS (UUIDs de recursos, vistas de dominio, grupos de validación
+ *       un MS (claves de recurso, vistas de dominio, grupos de validación
  *       específicos) viven en el paquete del MS consumidor. Aquí solo lo común:
  *       el wildcard {@link cl.duocuc.edutrack.ms.infrastructure.security.ResourceIds#ALL},
  *       la jerarquía

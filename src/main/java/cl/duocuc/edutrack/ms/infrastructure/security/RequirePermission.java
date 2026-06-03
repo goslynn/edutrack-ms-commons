@@ -27,7 +27,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  *       Gateway coincide con el valor del path-param indicado, el request se
  *       deja pasar sin consultar permisos.</li>
  *   <li>En caso contrario, delega a {@link PermissionEvaluator} con los
- *       roleIds del request, el UUID parseado desde {@link #resource()} y el
+ *       roleIds del request, la clave estable de {@link #resource()} y el
  *       bit de {@link #value()}.</li>
  *   <li>Si el evaluador devuelve {@code false}, aborta el request con
  *       {@code 403 Forbidden} (sin body).</li>
@@ -36,11 +36,11 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * <h3>Restricciones</h3>
  * <ul>
  *   <li>{@link #resource()} es un {@link String} porque las anotaciones Java
- *       solo aceptan constantes de compilación. El valor <b>debe</b> ser un UUID
- *       válido (lo parsea el filtro): un valor mal formado provocará una
- *       excepción al evaluar la primera request que toque ese endpoint. Cada MS
+ *       solo aceptan constantes de compilación. El valor es una <em>clave
+ *       estable</em> del recurso ({@code "<servicio>.<recurso>"}, p. ej.
+ *       {@code "auth.users"}), opaca para Auth y comparada por igualdad. Cada MS
  *       define sus constantes de recurso en su propio paquete.</li>
- *   <li>El recurso comodín {@link ResourceIds#ALL_UUID} no debe usarse aquí
+ *   <li>El recurso comodín {@link ResourceIds#ALL} no debe usarse aquí
  *       para anotar endpoints públicos: el comodín existe para grants, no para
  *       contratos de API.</li>
  * </ul>
@@ -48,7 +48,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * <h3>Ejemplo</h3>
  * <pre>{@code
  * @GET @Path("/{id}")
- * @RequirePermission(resource = AuthResourceId.USER, value = Permission.READ, selfParam = "id")
+ * @RequirePermission(resource = AuthResourceId.Key.USERS, value = Permission.READ, selfParam = "id")
  * public UserResponse find(@PathParam("id") UUID id) { ... }
  * }</pre>
  */
@@ -58,9 +58,9 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 public @interface RequirePermission {
 
     /**
-     * UUID (texto) del recurso sobre el que se evalúa el permiso. Debe ser un
-     * UUID válido; los MS suelen exponer constantes {@code public static final String}
-     * por dominio.
+     * Clave estable (texto) del recurso sobre el que se evalúa el permiso, p.
+     * ej. {@code "auth.users"}; los MS suelen exponer constantes
+     * {@code public static final String} por dominio.
      */
     String resource();
 

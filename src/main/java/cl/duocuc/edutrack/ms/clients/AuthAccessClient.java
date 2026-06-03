@@ -19,8 +19,6 @@ import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.rest.client.annotation.RegisterClientHeaders;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
-import java.util.UUID;
-
 /**
  * REST Client tipado contra el endpoint {@code GET /auth/access} del Auth
  * Service, consumido por {@link RemoteSuperUserResolver} (y disponible para
@@ -66,9 +64,9 @@ public interface AuthAccessClient {
     /**
      * Consulta los flags efectivos del usuario propagado sobre un recurso.
      *
-     * @param resourceUuid recurso a evaluar; usar
-     *                     {@link ResourceIds#ALL_UUID} para preguntar por el
-     *                     comodín (caso del check de superusuario).
+     * @param resourceKey  clave estable del recurso a evaluar; usar
+     *                     {@link ResourceIds#ALL} para preguntar por el comodín
+     *                     (caso del check de superusuario).
      * @param permission   permiso requerido para que el endpoint compute
      *                     {@code allowed}; no afecta a {@code effectiveFlags},
      *                     que es siempre el OR completo del usuario sobre el
@@ -79,6 +77,6 @@ public interface AuthAccessClient {
     @GET
     @Path("/auth/access")
     @Produces(MediaType.APPLICATION_JSON)
-    Response check(@QueryParam("resourceUuid") UUID resourceUuid, @QueryParam("permission") String permission);
+    Response check(@QueryParam("resourceKey") String resourceKey, @QueryParam("permission") String permission);
 
 }

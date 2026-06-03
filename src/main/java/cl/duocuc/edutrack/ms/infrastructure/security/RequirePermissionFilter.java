@@ -14,7 +14,6 @@ import jakarta.ws.rs.core.UriInfo;
 import jakarta.ws.rs.ext.Provider;
 
 import java.lang.reflect.Method;
-import java.util.UUID;
 
 /**
  * Filtro JAX-RS que materializa la anotación {@link RequirePermission}.
@@ -25,7 +24,7 @@ import java.util.UUID;
  * invoque sobre endpoints que también porten {@link RequirePermission}
  * (directamente o vía su clase contenedora). Endpoints sin la anotación no
  * pagan el costo del filtro. La anotación que la clase del filtro lleva
- * (recurso {@link ResourceIds#ALL_UUID}, {@link Permission#READ}) <b>no</b> se
+ * (recurso {@link ResourceIds#ALL}, {@link Permission#READ}) <b>no</b> se
  * evalúa contra los permisos del usuario: existe únicamente como marca de
  * binding y nunca se lee en {@link #filter(ContainerRequestContext)}.</p>
  *
@@ -46,8 +45,8 @@ import java.util.UUID;
  *   <li>Si {@link RequirePermission#selfParam()} está definido y el usuario
  *       autenticado tiene identidad, compara {@code userId.toString()} contra
  *       el path-param indicado. Si coincide, autoriza sin consultar permisos.</li>
- *   <li>Parsea {@link RequirePermission#resource()} como {@link UUID} y delega
- *       a {@link PermissionEvaluator#hasPermission}.</li>
+ *   <li>Pasa {@link RequirePermission#resource()} (la clave estable del
+ *       recurso) tal cual a {@link PermissionEvaluator#hasPermission}.</li>
  *   <li>Si el evaluador devuelve {@code false}, aborta con
  *       {@code 403 Forbidden} y body vacío.</li>
  * </ol>
@@ -69,7 +68,7 @@ import java.util.UUID;
  * </ul>
  */
 @Provider
-@RequirePermission(resource = ResourceIds.ALL_UUID, value = Permission.READ)
+@RequirePermission(resource = ResourceIds.ALL, value = Permission.READ)
 @Priority(Priorities.AUTHORIZATION)
 public class RequirePermissionFilter implements ContainerRequestFilter {
 
@@ -107,8 +106,7 @@ public class RequirePermissionFilter implements ContainerRequestFilter {
             }
         }
 
-        UUID resourceUuid = UUID.fromString(ann.resource());
-        if (!permissionEvaluator.hasPermission(headers.roleIds(), resourceUuid, ann.value().bit)) {
+        if (!permissionEvaluator.hasPermission(headers.roleIds(), ann.resource(), ann.value().bit)) {
             abort(ctx);
         }
     }
