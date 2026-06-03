@@ -3,7 +3,7 @@ package cl.duocuc.edutrack.ms.infrastructure.persistence;
 import cl.duocuc.edutrack.ms.infrastructure.context.RequestContext;
 import io.quarkus.arc.Arc;
 import io.quarkus.arc.InstanceHandle;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.config.ConfigProvider;
 
 import java.util.UUID;
 
@@ -43,13 +43,25 @@ public final class AuditContext {
         }
     }
 
+    /**
+     * Acceso al UUID del usuario NOOP configurado en
+     * {@code edutrack.defaults.noop-user-id}. La librería ship un default fijo y
+     * compartido en su {@code META-INF/microprofile-config.properties}.
+     *
+     * <p>{@code Props} no es un bean CDI (se instancia con {@code new}), por lo
+     * que {@code @ConfigProperty} no se procesaría: el valor se lee
+     * programáticamente vía {@link ConfigProvider}. Se usa {@code getValue} —no
+     * un fallback aleatorio— para fallar rápido si el sentinela faltara: un noop
+     * distinto por arranque rompería la atribución de auditoría. Con el default
+     * de la librería presente, ese fallo nunca debería ocurrir.</p>
+     */
     public static final class Props {
-        @ConfigProperty(name = "edutrack.defaults.noop-user-id")
         UUID noopId;
 
         public UUID noopUserId() {
             if (noopId == null) {
-                noopId = UUID.randomUUID();
+                noopId = ConfigProvider.getConfig()
+                        .getValue("edutrack.defaults.noop-user-id", UUID.class);
             }
             return noopId;
         }
