@@ -3,6 +3,7 @@ package cl.duocuc.edutrack.ms.infrastructure.persistence;
 import cl.duocuc.edutrack.ms.infrastructure.context.RequestContext;
 import io.quarkus.arc.Arc;
 import io.quarkus.arc.InstanceHandle;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.util.UUID;
 
@@ -20,15 +21,38 @@ import java.util.UUID;
 public final class AuditContext {
 
     private AuditContext() {}
-    //TODO: impl desde .env
-    public static final UUID NOOP_USER_ID = UUID.fromString("019e5c76-eaed-72c1-ad2c-c3bd0536d71d");
+
+    private static volatile Props props;
+
+    public static Props props() {
+        if (props == null) {
+            props = new Props();
+        }
+        return props;
+    }
 
     static UUID currentUserOrNoop() {
+        final UUID noop = props().noopUserId();
         try (InstanceHandle<RequestContext> handle = Arc.container().instance(RequestContext.class)) {
             if (handle == null || !handle.isAvailable()) return null;
-            return handle.get().headers().userId().orElse(NOOP_USER_ID);
+            return handle.get().headers()
+                    .userId()
+                    .orElse(noop);
         } catch (RuntimeException ignored) {
-            return NOOP_USER_ID;
+            return noop;
         }
     }
+
+    public static final class Props {
+        @ConfigProperty(name = "edutrack.defaults.noop-user-id")
+        UUID noopId;
+
+        public UUID noopUserId() {
+            if (noopId == null) {
+                noopId = UUID.randomUUID();
+            }
+            return noopId;
+        }
+    }
+
 }
