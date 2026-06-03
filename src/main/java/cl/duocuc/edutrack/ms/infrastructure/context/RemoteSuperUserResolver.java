@@ -1,96 +1,54 @@
 package cl.duocuc.edutrack.ms.infrastructure.context;
 
-import cl.duocuc.edutrack.ms.clients.AuthAccessClient;
-import cl.duocuc.edutrack.ms.infrastructure.discovery.HTTPClientUtils;
-import cl.duocuc.edutrack.ms.infrastructure.security.Permission;
+import cl.duocuc.edutrack.ms.infrastructure.security.PermissionEvaluator;
 import cl.duocuc.edutrack.ms.infrastructure.security.ResourceIds;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonView;
 import io.quarkus.arc.DefaultBean;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import org.eclipse.microprofile.rest.client.inject.RestClient;
-import org.jboss.logging.Logger;
-
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 /**
- * Implementación por defecto de {@link SuperUserResolver}: pregunta al Auth
- * Service vía HTTP usando {@link AuthAccessClient}. Está anotada con
- * {@link DefaultBean @DefaultBean}, por lo que cualquier microservicio que
- * declare otra implementación {@code @ApplicationScoped} de
- * {@link SuperUserResolver} en su propio classpath la sustituye sin tocar
+ * Implementación por defecto de {@link SuperUserResolver}: deriva la condición
+ * "super" del mismo {@link PermissionEvaluator} resuelto por CDI, sin volver a
+ * hablar con Auth por su cuenta. Está anotada con {@link DefaultBean @DefaultBean},
+ * por lo que cualquier microservicio que declare otra implementación
+ * {@code @ApplicationScoped} de {@link SuperUserResolver} la sustituye sin tocar
  * configuración (caso del propio Auth Service, que resuelve localmente).
  *
- * <h3>Algoritmo</h3>
- * <ol>
- *   <li>Si el request no trae {@code X-User-Id} ⇒ {@code false} sin llamadas
- *       remotas.</li>
- *   <li>Llama a {@code GET /auth/access?resourceUuid=ALL&permission=EXECUTE}
- *       reenviando las cabeceras de identidad del request actual. La
- *       {@code permission} pasada es irrelevante para el resultado: solo se
- *       lee {@code effectiveFlags} de la respuesta, que ya es el OR completo
- *       del usuario sobre el recurso comodín.</li>
- *   <li>Devuelve {@code (effectiveFlags & 7) == 7} — los tres bits
- *       {@code rwx} encendidos sobre {@link ResourceIds#ALL}.</li>
- * </ol>
+ * <h3>Definición operacional</h3>
+ * <p>Ser "super" es tener los tres bits {@code rwx} sobre el recurso comodín
+ * {@link ResourceIds#ALL}. Esto se reduce exactamente a una consulta de permiso
+ * más: {@code evaluator.hasPermission(roleIds, ALL, rwx)}. Delegar evita
+ * duplicar la lógica de bits y el cliente HTTP: en un MS remoto el evaluador es
+ * {@link cl.duocuc.edutrack.ms.infrastructure.security.RemotePermissionEvaluator}
+ * (una llamada a {@code GET /auth/access}); en Auth es la implementación local
+ * contra la base de datos. El resolver no necesita saber cuál.</p>
  *
  * <h3>Fail-closed</h3>
- * <p>Cualquier excepción durante la llamada (timeout, 5xx, error de
- * deserialización, indisponibilidad del Auth Service) se loguea como
- * {@code WARN} y se traduce a {@code false}. Nunca se propaga al endpoint
- * llamante: una falla intermitente de Auth no debe escalar privilegios.</p>
+ * <p>El manejo de fallos (timeout, indisponibilidad de Auth, etc.) vive en el
+ * {@link PermissionEvaluator}, que ya es fail-closed: ante cualquier problema
+ * responde {@code false}. Sin identidad propagada, {@code roleIds} viene vacío y
+ * el evaluador resuelve {@code false} sin llamadas remotas.</p>
+ *
+ * <h3>Caché</h3>
+ * <p>El resultado lo memoiza {@link RequestContext} a nivel de request, así que
+ * esta implementación no cachea internamente.</p>
  */
 @ApplicationScoped
 @DefaultBean
 public class RemoteSuperUserResolver implements SuperUserResolver {
 
-    private static final Logger LOG = Logger.getLogger(RemoteSuperUserResolver.class);
-
+    /** Los tres bits Unix-style ({@code rwx}) que definen al superusuario. */
     private static final short RWX = 7;
 
     @Inject
     RequestContext requestContext;
 
     @Inject
-    @RestClient
-    AuthAccessClient client;
-
-    @Inject
-    HTTPClientUtils clientUtils;
+    PermissionEvaluator permissionEvaluator;
 
     @Override
     public boolean isSuper() {
-        RequestHeaders h = requestContext.headers();
-        if (h.userId().isEmpty()) {
-            return false;
-        }
-        String userId = h.userId().get().toString();
-        try {
-            var raw = client.check(ResourceIds.ALL, Permission.EXECUTE.name());
-            var resp = clientUtils.readOrThrow(raw, AccessCheckResponse.class);
-            return (resp.effectiveFlags() & RWX) == RWX;
-        } catch (RuntimeException e) {
-            LOG.warnf(e, "Fallo consultando /auth/access para super-check (userId=%s) — fail-closed", userId);
-            return false;
-        }
+        return permissionEvaluator.hasPermission(
+                requestContext.headers().roleIds(), ResourceIds.ALL, RWX);
     }
-
-    /**
-     * Vista mínima del JSON emitido por {@code AccessResource} en
-     * {@code auth/}. Solo declara los campos que esta librería necesita
-     * ({@code effectiveFlags}); el resto del payload se descarta con
-     * {@link JsonIgnoreProperties}.
-     *
-     * <p>El campo se anota con {@link JsonView} porque la configuración
-     * Jackson de la librería ({@code JacksonCustomConfig}) deshabilita
-     * {@code DEFAULT_VIEW_INCLUSION}: sin la vista, Jackson no
-     * deserializaría el campo.</p>
-     */
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    record AccessCheckResponse(
-            short effectiveFlags
-    ) {}
-
 }
