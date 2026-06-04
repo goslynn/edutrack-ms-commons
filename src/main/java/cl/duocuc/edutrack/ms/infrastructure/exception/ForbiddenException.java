@@ -15,6 +15,10 @@ package cl.duocuc.edutrack.ms.infrastructure.exception;
  */
 public class ForbiddenException extends DomainException {
 
+    public ForbiddenException(String message) {
+        this("", message);
+    }
+
     /**
      * @param code    código de dominio estable, formato {@code <MS>.<ENTIDAD>.<CONDICION>}
      * @param message texto legible para el cliente

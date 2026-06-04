@@ -14,6 +14,10 @@ package cl.duocuc.edutrack.ms.infrastructure.exception;
  */
 public class ConflictException extends DomainException {
 
+    public ConflictException(String message) {
+        this("", message);
+    }
+
     /**
      * @param code    código de dominio estable, formato {@code <MS>.<ENTIDAD>.<CONDICION>}
      * @param message texto legible para el cliente

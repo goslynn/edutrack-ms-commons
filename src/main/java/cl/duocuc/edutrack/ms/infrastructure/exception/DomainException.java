@@ -21,7 +21,7 @@ import java.util.Map;
  *       {@code "AUTH.USER.EMAIL_EXISTS"}). Pensado para que el cliente/UI
  *       discrimine condiciones sin parsear el mensaje, y se mantiene estable
  *       aunque el {@code message} cambie entre versiones.</li>
- *   <li>{@link #message()} ({@code getMessage()}) — texto legible para
+ *   <li>({@code getMessage()}) — texto legible para
  *       humanos. Puede internacionalizarse o cambiar entre versiones.</li>
  *   <li>{@link #metadata()} — pares clave/valor con contexto estructurado
  *       (por ejemplo {@code {"email": "foo@bar"}}). Se preserva el orden de
