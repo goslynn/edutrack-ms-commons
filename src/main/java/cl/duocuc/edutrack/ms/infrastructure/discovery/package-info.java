@@ -79,12 +79,13 @@
  * {@code clients} para el contrato detallado.</p>
  *
  * <h2>Ejemplo dentro de esta misma librería</h2>
- * <p>{@link cl.duocuc.edutrack.ms.clients.AuthAccessClient} es
- * el caso límite legítimo que vive en {@code infrastructure} (authz transversal,
- * no dominio): client declarativo con
- * {@code @RegisterRestClient(configKey = ServiceIds.AUTH)} que inyecta y consume
- * {@link cl.duocuc.edutrack.ms.infrastructure.context.RemoteSuperUserResolver}
- * vía {@code @Inject @RestClient}.</p>
+ * <p>{@link cl.duocuc.edutrack.ms.clients.AuthClient} es el SDK completo del
+ * Auth Service: client declarativo con
+ * {@code @RegisterRestClient(configKey = ServiceIds.AUTH)} que cubre toda su
+ * API (auth, access, users, roles, permisos, JWKS). Su endpoint
+ * {@code GET /auth/access} lo consume
+ * {@link cl.duocuc.edutrack.ms.infrastructure.security.RemotePermissionEvaluator}
+ * vía {@code @Inject @RestClient} para la authz transversal.</p>
  *
  * <h2>Resiliencia</h2>
  * <p>El descubrimiento es ortogonal a la resiliencia: el patrón resuelve

@@ -1,5 +1,7 @@
 package cl.duocuc.edutrack.ms.infrastructure.exception;
 
+import jakarta.ws.rs.core.Response;
+
 /**
  * {@link DomainException} con status {@code 409 Conflict} preconfigurado.
  *
@@ -23,6 +25,6 @@ public class ConflictException extends DomainException {
      * @param message texto legible para el cliente
      */
     public ConflictException(String code, String message) {
-        super(409, code, message);
+        super(Response.Status.CONFLICT, code, message);
     }
 }

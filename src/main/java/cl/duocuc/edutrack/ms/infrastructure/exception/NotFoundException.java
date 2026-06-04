@@ -1,5 +1,7 @@
 package cl.duocuc.edutrack.ms.infrastructure.exception;
 
+import jakarta.ws.rs.core.Response;
+
 /**
  * {@link DomainException} con status {@code 404 Not Found} preconfigurado.
  *
@@ -24,6 +26,6 @@ public class NotFoundException extends DomainException {
      * @param message texto legible para el cliente
      */
     public NotFoundException(String code, String message) {
-        super(404, code, message);
+        super(Response.Status.NOT_FOUND, code, message);
     }
 }

@@ -2,6 +2,7 @@ package cl.duocuc.edutrack.ms.infrastructure.security;
 
 import cl.duocuc.edutrack.ms.infrastructure.context.RequestContext;
 import cl.duocuc.edutrack.ms.infrastructure.context.RequestHeaders;
+import cl.duocuc.edutrack.ms.infrastructure.exception.ForbiddenException;
 import jakarta.annotation.Priority;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Priorities;
@@ -9,11 +10,11 @@ import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.container.ResourceInfo;
 import jakarta.ws.rs.core.Context;
-import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 import jakarta.ws.rs.ext.Provider;
 
 import java.lang.reflect.Method;
+import java.util.Objects;
 
 /**
  * Filtro JAX-RS que materializa la anotación {@link RequirePermission}.
@@ -47,8 +48,13 @@ import java.lang.reflect.Method;
  *       el path-param indicado. Si coincide, autoriza sin consultar permisos.</li>
  *   <li>Pasa {@link RequirePermission#resource()} (la clave estable del
  *       recurso) tal cual a {@link PermissionEvaluator#hasPermission}.</li>
- *   <li>Si el evaluador devuelve {@code false}, aborta con
- *       {@code 403 Forbidden} y body vacío.</li>
+ *   <li>Si el evaluador devuelve {@code false}, lanza una
+ *       {@link ForbiddenException} (code {@code "SECURITY.PERMISSION.DENIED"},
+ *       con {@code resource}/{@code requiredPermission}/{@code userId} en la
+ *       metadata). La excepción propaga desde el filtro hasta
+ *       {@link cl.duocuc.edutrack.ms.infrastructure.exception.GlobalExceptionMappers#mapDomain},
+ *       que la serializa en el envelope {@code ErrorResponse} estándar —
+ *       mismo formato detallado que cualquier error de dominio.</li>
  * </ol>
  *
  * <p>El cálculo de flags efectivos (incluido el OR con el comodín
@@ -107,11 +113,14 @@ public class RequirePermissionFilter implements ContainerRequestFilter {
         }
 
         if (!permissionEvaluator.hasPermission(headers.roleIds(), ann.resource(), ann.value().bit)) {
-            abort(ctx);
+            String userId = headers.userId().map(Objects::toString).orElse("anonymous");
+            throw new ForbiddenException(
+                    "SECURITY.PERMISSION.DENIED",
+                    "User '" + userId + "' lacks '" + ann.value().name()
+                            + "' permission on resource '" + ann.resource() + "'")
+                    .with("resource", ann.resource())
+                    .with("requiredPermission", ann.value().name())
+                    .with("userId", userId);
         }
-    }
-
-    private static void abort(ContainerRequestContext ctx) {
-        ctx.abortWith(Response.status(Response.Status.FORBIDDEN).build());
     }
 }

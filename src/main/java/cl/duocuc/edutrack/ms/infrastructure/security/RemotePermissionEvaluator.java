@@ -1,6 +1,6 @@
 package cl.duocuc.edutrack.ms.infrastructure.security;
 
-import cl.duocuc.edutrack.ms.clients.AuthAccessClient;
+import cl.duocuc.edutrack.ms.clients.AuthClient;
 import cl.duocuc.edutrack.ms.infrastructure.discovery.HTTPClientUtils;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.quarkus.arc.DefaultBean;
@@ -15,7 +15,7 @@ import java.util.UUID;
 
 /**
  * Implementación por defecto de {@link PermissionEvaluator}: delega la decisión
- * en el Auth Service vía HTTP usando {@link AuthAccessClient}. Está anotada con
+ * en el Auth Service vía HTTP usando {@link AuthClient}. Está anotada con
  * {@link DefaultBean @DefaultBean}, por lo que cualquier microservicio que
  * declare otra implementación {@code @ApplicationScoped} de
  * {@link PermissionEvaluator} en su classpath la sustituye sin tocar
@@ -53,7 +53,7 @@ public class RemotePermissionEvaluator implements PermissionEvaluator {
 
     @Inject
     @RestClient
-    AuthAccessClient client;
+    AuthClient client;
 
     @Inject
     HTTPClientUtils clientUtils;
