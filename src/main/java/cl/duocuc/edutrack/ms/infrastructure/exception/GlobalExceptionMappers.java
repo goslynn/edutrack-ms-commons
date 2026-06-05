@@ -148,7 +148,7 @@ public class GlobalExceptionMappers {
             reasonPhrase(status),
             code,
             message,
-            path(uri),
+            //path(uri),
             metadata == null || metadata.isEmpty() ? null : new LinkedHashMap<>(metadata),
             exposeStacktrace ? renderTrace(ex) : null
         );
@@ -171,7 +171,7 @@ public class GlobalExceptionMappers {
     }
 
     private static String path(UriInfo uri) {
-        return uri == null ? null : "/" + uri.getPath();
+        return uri == null ? null : "/" + uri.getAbsolutePath();
     }
 
     private static String reasonPhrase(int status) {

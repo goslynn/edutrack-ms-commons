@@ -16,7 +16,7 @@ import java.util.Map;
  *
  * <p>Los campos opcionales ({@code code}, {@code metadata}, {@code trace})
  * se omiten cuando son {@code null} o vacíos gracias a
- * {@link JsonInclude#NON_EMPTY}, por lo que el envelope se mantiene mínimo
+ * {@link JsonInclude}, por lo que el envelope se mantiene mínimo
  * cuando no hay datos que reportar.</p>
  *
  * <h3>Forma típica del JSON</h3>
@@ -43,8 +43,6 @@ import java.util.Map;
  *                  ({@code <MS>.<ENTIDAD>.<CONDICION>}); puede ser {@code null}
  *                  cuando el error no proviene de {@link DomainException}
  * @param message   mensaje legible para humanos
- * @param path      path del request ({@code "/" + uriInfo.getPath()}); puede
- *                  ser {@code null} si no hay {@code UriInfo} disponible
  * @param metadata  contexto adicional estructurado; clave/valor arbitrarios
  *                  ({@code Map<String,Object>}); {@code null} cuando no hay
  * @param trace     hasta 25 frames del stack trace serializados como strings.
@@ -54,12 +52,12 @@ import java.util.Map;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ErrorResponse(
-    @JsonView(Views.Base.class) Instant timestamp,
-    @JsonView(Views.Base.class) int status,
-    @JsonView(Views.Base.class) String error,
-    @JsonView(Views.Base.class) String code,
-    @JsonView(Views.Base.class) String message,
-    @JsonView(Views.Base.class) String path,
-    @JsonView(Views.Base.class) Map<String, Object> metadata,
-    @JsonView(Views.Base.class) List<String> trace
+    Instant timestamp,
+    int status,
+    String error,
+    String code,
+    String message,
+    //String path,
+    Map<String, Object> metadata,
+    List<String> trace
 ) {}
