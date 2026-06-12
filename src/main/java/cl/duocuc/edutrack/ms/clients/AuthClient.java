@@ -1,5 +1,6 @@
 package cl.duocuc.edutrack.ms.clients;
 
+import cl.duocuc.edutrack.ms.infrastructure.discovery.ErrorPropagationClientFilter;
 import cl.duocuc.edutrack.ms.infrastructure.discovery.IdentityHeadersFactory;
 import cl.duocuc.edutrack.ms.infrastructure.discovery.ServiceIds;
 import cl.duocuc.edutrack.ms.infrastructure.security.ResourceIds;
@@ -7,6 +8,7 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.rest.client.annotation.RegisterClientHeaders;
+import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
 import java.util.UUID;
@@ -33,10 +35,18 @@ import java.util.UUID;
  * viajan como {@link Object}: el client se mantiene <b>genérico</b> y
  * tolerant-reader, sin acoplarse a los DTOs de dominio de Auth (que viven en su
  * propio MS y no son visibles desde la librería). El consumidor decide cómo
- * leer el cuerpo — típicamente con
- * {@link cl.duocuc.edutrack.ms.infrastructure.discovery.HTTPClientUtils#readOrThrow}
- * para reconstruir la {@code DomainException} del upstream, o
- * {@code readEntity(...)} contra su propio DTO tolerant-reader.</p>
+ * leer el cuerpo — típicamente con {@code readEntity(...)} contra su propio DTO
+ * tolerant-reader.</p>
+ *
+ * <h3>Propagación de errores automática</h3>
+ * <p>Engancha {@code @RegisterProvider(}{@link ErrorPropagationClientFilter}{@code .class)}:
+ * cualquier respuesta no-2xx de Auth <b>lanza sola</b> el {@code DomainException}
+ * reconstruido desde el envelope del upstream, antes de llegar al call site. Por
+ * eso los consumidores no necesitan
+ * {@link cl.duocuc.edutrack.ms.infrastructure.discovery.HTTPClientUtils#readOrThrow}:
+ * cuando un método retorna, el {@code Response} ya es 2xx y basta con
+ * {@code readEntity(...)}. {@code readOrThrow} sigue disponible para clients que
+ * <b>no</b> registren el filtro.</p>
  *
  * <h3>Identidad del request</h3>
  * <p>{@code @RegisterClientHeaders(IdentityHeadersFactory.class)} reenvía
@@ -53,6 +63,7 @@ import java.util.UUID;
  */
 @RegisterRestClient(configKey = ServiceIds.AUTH)
 @RegisterClientHeaders(IdentityHeadersFactory.class)
+@RegisterProvider(ErrorPropagationClientFilter.class)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface AuthClient {

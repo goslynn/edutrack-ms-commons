@@ -34,5 +34,16 @@ public final class ResourceIds {
      */
     public static final String ALL = "*";
 
+    // TODO(resource-catalog): catálogo de recursos descontralizado (decisión: opción 3).
+    //  Auth es deliberadamente opaco a las resource keys de otros dominios, así que NO
+    //  centralizamos un catálogo en Auth ni una tabla `resources`. En su lugar, cada MS
+    //  expone sus propias claves vía un endpoint de metadatos (p. ej. GET /<servicio>/meta/resources)
+    //  derivado de su catálogo en código (AuthResourceId, CourseResourceId, ...). El frontend
+    //  (o un BFF) agrega los catálogos barriendo ServiceIds.ALL para poblar la UI de
+    //  administración de permisos por rol — hoy GET /roles/{id}/permissions solo devuelve los
+    //  grants existentes, no el universo de recursos asignables. Pendiente: contrato común del
+    //  endpoint de metadatos (forma de respuesta: key + label/descripción legible) para que el
+    //  agregador lo consuma de forma uniforme en todos los MS.
+
     private ResourceIds() {}
 }

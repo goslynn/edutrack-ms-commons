@@ -86,14 +86,44 @@ public class HTTPClientUtils {
         response.bufferEntity(); // permite reintentar la lectura si la primera falla
         try {
             ErrorResponse e = response.readEntity(ErrorResponse.class);
-            if (e != null && (e.code() != null || e.message() != null)) {
-                int upstreamStatus = e.status() != 0 ? e.status() : status;
-                return new DomainException(upstreamStatus, e.code(), e.message())
-                        .withAll(e.metadata());
+            DomainException mapped = fromErrorResponse(status, e);
+            if (mapped != null) {
+                return mapped;
             }
         } catch (RuntimeException ignored) {
             // El upstream no devolvió el envelope estándar — cae al genérico.
         }
-        return new DomainException(status, null, "Upstream service returned HTTP " + status);
+        return genericUpstreamError(status);
+    }
+
+    /**
+     * Reconstruye un {@link DomainException} a partir del envelope
+     * {@link ErrorResponse} ya deserializado del upstream, preservando su
+     * {@code code}, {@code message} y {@code metadata}. Devuelve {@code null}
+     * cuando el envelope no aporta información de dominio (ni {@code code} ni
+     * {@code message}), señal de que el caller debe caer al error genérico.
+     *
+     * <p>Es el punto único de ensamble compartido entre {@link #readOrThrow} (que
+     * deserializa con {@code Response.readEntity}) y el
+     * {@link ErrorPropagationClientFilter} (que deserializa el stream crudo del
+     * response context): ambos parsean el {@link ErrorResponse} a su manera y
+     * delegan aquí la traducción a {@link DomainException}.</p>
+     *
+     * @param httpStatus status HTTP de la respuesta, usado como fallback cuando
+     *                   el envelope no trae {@code status}
+     * @param e          envelope deserializado, o {@code null}
+     */
+    static DomainException fromErrorResponse(int httpStatus, ErrorResponse e) {
+        if (e != null && (e.code() != null || e.message() != null)) {
+            int upstreamStatus = e.status() != 0 ? e.status() : httpStatus;
+            return new DomainException(upstreamStatus, e.code(), e.message())
+                    .withAll(e.metadata());
+        }
+        return null;
+    }
+
+    /** Error genérico cuando el upstream no devolvió el envelope estándar. */
+    static DomainException genericUpstreamError(int httpStatus) {
+        return new DomainException(httpStatus, null, "Upstream service returned HTTP " + httpStatus);
     }
 }
